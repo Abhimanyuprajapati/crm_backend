@@ -1,10 +1,16 @@
+import { error } from "../utils/response.js";
 
-export async function register(req, res){
-console.log(req.body);
+export async function register(req, res) {
+  const { userName, email, password, fistName, lastName } = req.body;
 
-res.send('registered');
+//   console.log(userName, email, password, fistName, lastName);
+
+if(!userName || !email || !password || !fistName || !lastName) {
+    // return res.status(400).send("All fields are required")
+    console.log(error(res, "All fields are required", 400));
 }
 
-export async function login(req, res){
-
+  res.send("registered");
 }
+
+export async function login(req, res) {}
