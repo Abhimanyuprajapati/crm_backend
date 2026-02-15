@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 dotenv.config();
 import authRoutes from './routes/auth.route.js';
+import { connectDB } from './lib/db.js';
 
 
 const app = express()
@@ -28,4 +29,5 @@ app.use('/v1/auth', authRoutes)
 
 app.listen(PORT, () => {
   console.log(`http://localhost:${PORT}`)
+  connectDB();
 })
