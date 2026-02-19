@@ -9,7 +9,9 @@ import OtpModel from "../models/otpSchema.js";
 import sendMail from "../utils/emailService.js";
 import verifiedEmailSchema from "../models/verifiedEmailSchema.js";
 import jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
 
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export async function sendOTP(req, res) {
   try {
@@ -215,3 +217,46 @@ export async function login(req, res) {
     error(res, "Failed to login", 500, err.message);
   }
 }
+
+// google login 
+export async function googleLogin(req, res){
+  try {
+    const { token } = req.body;
+
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+
+    const { sub, email, name, picture } = payload;
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = await User.create({
+        email,
+        userName: name,
+        provider: "google",
+        providerId: sub,
+        avatar: picture,
+      });
+    }
+
+    const jwtToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET_KEY, {
+      expiresIn: "15d",
+    });
+
+    res.cookie("jwt", jwtToken, {
+      httpOnly: true,
+      sameSite: "None",
+      secure: process.env.NODE_ENV === "production",
+    });
+
+    success(res, "Google login successful", { user }, 200);
+
+  } catch (err) {
+    error(res, "Google login failed", 500, err.message);
+  }
+};

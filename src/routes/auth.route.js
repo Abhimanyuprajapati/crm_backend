@@ -1,5 +1,5 @@
 import express from 'express';
-import { login, register, sendOTP, verifyOTP } from '../controllers/auth.controller.js';
+import { googleLogin, login, register, sendOTP, verifyOTP } from '../controllers/auth.controller.js';
 import User from '../models/User.js';
 
 const router = express.Router();
@@ -9,6 +9,8 @@ router.post('/verifyotp', verifyOTP)
 router.post('/register', register)
 router.post('/login', login)
 
+// here is the auth google and microsoft routes
+router.post("/google", googleLogin);
 
 
 export default router;
