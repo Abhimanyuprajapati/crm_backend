@@ -30,7 +30,9 @@ app.get("/", (req, res) => {
 // auth routes
 app.use("/v1/auth", authRoutes);
 
+// connect to database
+connectDB();
+
 app.listen(PORT, () => {
   console.log(`http://localhost:${PORT}`);
-  connectDB();
 });
