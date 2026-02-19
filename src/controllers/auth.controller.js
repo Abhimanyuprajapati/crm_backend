@@ -8,18 +8,20 @@ import User from "../models/User.js";
 import OtpModel from "../models/otpSchema.js";
 import sendMail from "../utils/emailService.js";
 import verifiedEmailSchema from "../models/verifiedEmailSchema.js";
+import jwt from "jsonwebtoken";
+
 
 export async function sendOTP(req, res) {
   try {
     const { email } = req.body;
-
+    
     if (!email) {
       return error(res, "Email is required", 400);
     }
 
     // check if email is valid
     const existingUserEmail = await User.findOne({ email });
-    if (!existingUserEmail) {
+    if (existingUserEmail) {
       return error(res, "Email Already Registered", 400);
     }
 
@@ -171,4 +173,45 @@ export async function register(req, res) {
   }
 }
 
-export async function login(req, res) {}
+export async function login(req, res) {
+  try{
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return error(res, "Email and password are required", 400);
+    }
+
+    const existingUser = await User.findOne({email})
+    if (!existingUser) {
+      return error(res, "Invalid email or password", 400);
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(
+      password,
+      existingUser.password
+    );   
+    
+    if(!isPasswordCorrect){
+      return error(res, "Invalid email or password", 400);
+    }
+
+     const token = jwt.sign(
+      { userId: existingUser._id },
+      process.env.JWT_SECRET_KEY,
+      {
+        expiresIn: "15d",
+      }
+    );
+
+    res.cookie("jwt", token, {
+      maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
+      httpOnly: true, // Prevents client-side JavaScript from accessing the cookie
+      sameSite: "Strict", // Helps prevent CSRF attacks
+      secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+    });
+
+    success(res, "Login successful", { existingUser }, 200);
+
+  }catch(err){
+    error(res, "Failed to login", 500, err.message);
+  }
+}
